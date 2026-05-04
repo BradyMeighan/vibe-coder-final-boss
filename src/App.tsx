@@ -15,8 +15,6 @@ import WhatDidntWork from "./interactive/WhatDidntWork";
 import ScoreAnatomy from "./interactive/ScoreAnatomy";
 import SegNetScrubber from "./interactive/SegNetScrubber";
 import SidecarImpact from "./interactive/SidecarImpact";
-import PoseTrajectory from "./interactive/PoseTrajectory";
-import MaskConditioning from "./interactive/MaskConditioning";
 import References from "./components/References";
 import Abstract from "./components/Abstract";
 import Postscript from "./components/Postscript";
@@ -45,6 +43,9 @@ export default function App() {
             pairs is <span className="text-comma-green font-semibold">99.97%</span>.
           </p>
           <SegNetScrubber />
+          <p className="text-white/55 text-[14px] mt-8 max-w-[820px]">
+            That's the seg term. It's one of three the score formula adds together — the next section unpacks all three and shows where 0.229 actually comes from.
+          </p>
         </div>
       </section>
 
@@ -94,6 +95,9 @@ export default function App() {
             <li>The rate term is linear. Saving 1 KB is always worth the same amount: <Code>25 / 37,545,489 ≈ 6.7 · 10⁻⁷</Code> score units. So engineering a smaller archive is a freely composable optimization where every byte saved is a fixed gain.</li>
             <li>SegNet distortion enters with a 100× multiplier and is roughly twice as easy to push down as pose distortion. The former responds to the model's mask conditioning, the latter requires geometric consistency between two synthesized frames. Most teams optimize seg first; we did too.</li>
           </ol>
+          <p>
+            Rate dominates, so byte engineering matters more than chasing distortion. Where do those 197 KB actually live?
+          </p>
         </Prose>
       </Section>
 
@@ -117,6 +121,9 @@ export default function App() {
           </p>
           <p>
             The <strong>sidecar</strong> at 2.4 KB is the surprise. 1.2% of the archive carries 2.4% of the score improvement, because the rate-distortion tradeoff is steeper at this end of the curve.
+          </p>
+          <p>
+            Mask is the fattest slice. So the codec for it is where the writeup starts.
           </p>
         </Prose>
       </Section>
@@ -221,6 +228,9 @@ export default function App() {
           <p>
             We also explored deeper interventions: reordering the cascade itself, modifying the context model, per-tile mode selection across the codec's 11 alternative adaptive modes. Putting <Code>prev</Code> first (intuitive for video) costs +83 KB; the spatial predictors are far stronger than temporal because the codec runs frame-by-frame and PREV is the same-position pixel from the previous frame, which on a moving dashcam is rarely the same pixel content. ~20 codec source variants explored; the gain ceiling for anything else is ≈300 bytes.
           </p>
+          <p>
+            That's the encoder side. The decoder reads those 135 KB into a generator, which paints them back into frames. That generator is the next 57 KB of our archive — and the next section.
+          </p>
         </Prose>
       </Section>
 
@@ -261,34 +271,11 @@ export default function App() {
         <Figure src="/writeup_assets/hero_pair_60.png" alt="hero pair 60" caption="Left: ground truth. Right: our reconstruction. Different palette; same SegNet output." />
         <Figure src="/writeup_assets/gen_reconstruction.gif" alt="generator reconstruction" caption="Road geometry, sky/foliage band, and lane markings emerge purely as the easiest way for the generator to satisfy SegNet's argmax. Never supervised by a pixel-level loss." />
 
-        <SubHeading kicker="3.1" id="mask-cond">Mask in, painting out</SubHeading>
-        <Prose>
+        <Prose className="mt-8">
           <p>
-            The model is conditioned on a 5-class semantic mask plus a 6-dim
-            pose vector. That's it — no other signal. To prove the mask is
-            doing the heavy lifting, here's the same pair rendered with
-            various mutilations of the input mask. Click around: "no vehicle"
-            wipes the red car blob, "swap sky ↔ road" inverts the palette
-            top-to-bottom, "all class 2" collapses the whole frame to road.
+            We didn't design this generator by hand. Every architectural decision in the diagram above was the survivor of a few hundred short experiments. That's the next section.
           </p>
         </Prose>
-
-        <div className="mt-8"><MaskConditioning /></div>
-
-        <SubHeading kicker="3.2" id="pose-traj">PoseNet sees the same trajectory</SubHeading>
-        <Prose>
-          <p>
-            PoseNet reads both frames of each pair and outputs a 6-dim
-            ego-motion vector (forward speed + 5 rotation/orientation rates).
-            Below: PoseNet's output on the original frames (white) vs on our
-            reconstruction (green) for all 600 pairs in the test video.
-            The two paths overlay because pose distortion is sub-percent of
-            the magnitude of motion. Drag the slider or click the trajectory
-            to scrub.
-          </p>
-        </Prose>
-
-        <div className="mt-8"><PoseTrajectory /></div>
       </Section>
 
       {/* autoresearch */}
@@ -331,6 +318,12 @@ export default function App() {
         <Pull label="HIGHEST-LEVERAGE CATEGORIES">
           FP4-wrapping zero-initialized Linears (saves ~9 KB per Linear) and focal loss + boundary weighting (concentrates gradient on the pixels where one logit perturbation flips an argmax). Together responsible for ~25 KB in rate and a sustained ~0.013 score improvement.
         </Pull>
+
+        <Prose className="mt-12">
+          <p>
+            Once exp 182 stuck (the dual-FiLM Head 1 shape above), the architecture froze. Time to actually train it.
+          </p>
+        </Prose>
       </Section>
 
       {/* training */}
@@ -383,6 +376,12 @@ export default function App() {
         </Pull>
 
         <Figure src="/writeup_assets/h3_progression.png" alt="h3 progression" caption="Pose distortion dropped from 0.0833 → 0.0778 despite removing 4096 parameters from the conditioning path. Rate-saving and pose-improving in the same change." />
+
+        <Prose className="mt-8">
+          <p>
+            That's the trained model: <Code>seg ≈ 0.000271</Code>, <Code>pose ≈ 0.000604</Code>. Score 0.234 with everything we have so far. The next 0.005 doesn't come from a better model. It comes from a 2.4 KB sidecar that targets the residual.
+          </p>
+        </Prose>
       </Section>
 
       {/* sidecar */}
@@ -502,6 +501,12 @@ export default function App() {
         </Prose>
 
         <div className="mt-8"><WhatDidntWork /></div>
+
+        <Prose className="mt-12">
+          <p>
+            Sidecar took the score to 0.229. The remaining 197 KB still had byte-level fat we hadn't trimmed — the model serialization, the pose stream, the zip envelope. Three small interventions there.
+          </p>
+        </Prose>
       </Section>
 
       {/* byte squeezing */}
@@ -560,6 +565,9 @@ export default function App() {
         <Prose>
           <p>
             Inside <Code>archive.zip</Code> we ship a single member named <Code>p</Code> using <Code>ZIP_STORED</Code>. Filename saves ~6 bytes per character vs. a descriptive name; one stored member instead of three saves ~50 bytes of duplicated zip metadata; <Code>ZIP_STORED</Code> saves ~30 bytes of zip-level "compression" overhead that would otherwise re-encode our already-entropy-coded data. Inside <Code>p</Code>, our own length-prefix layout is plain concatenation, no per-component zip overhead at all.
+          </p>
+          <p>
+            That's everything. Codec, generator, sidecar, byte squeeze. Below: the same story compressed into the score curve.
           </p>
         </Prose>
       </Section>
