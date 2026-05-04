@@ -81,7 +81,6 @@ export default function SegNetScrubber() {
     // Find min/max of agreement % to scale to vertical extent
     const agrees = stats.pairs.map((p) => p.agree_pct);
     const lo = Math.min(...agrees);
-    const hi = 100;
     const yLo = Math.max(98, Math.floor(lo * 10) / 10); // visual zoom on top 2%
     const yHi = 100;
 
