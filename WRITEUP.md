@@ -1,7 +1,7 @@
-# From 4.39 → 0.24: lossless arithmetic mask coding + a tiny FP4 generator + autoresearch + low-rank fine-tune
+# From 4.39 to 0.229: lossless arithmetic mask coding + a tiny FP4 generator + autoresearch + low-rank fine-tune + a 2.4 KB learned sidecar
 
-**Final score: 0.2366** (raw eval, sidecar refinements still in progress).
-**Compression ratio: 190×** (uncompressed 37.5 MB → compressed 198 KB).
+**Final score: 0.22878** (independently reproduced via `eval.yml` on `ubuntu-latest`, 16m17s).
+**Compression ratio: 190×** (uncompressed 37.5 MB → compressed 197 KB).
 **Approach:** store the 5-class SegNet semantic mask losslessly via a tuned adaptive arithmetic coder, then reconstruct RGB frames with a 92K-parameter FP4-quantized generator conditioned on the mask + a 6-D pose vector. The generator was found by an LLM-driven autoresearch loop and the conditioning MLP was compressed by SVD-truncated low-rank factorization. Every byte of the archive is then squeezed by a final pass of small packing tricks.
 
 ![score journey](writeup_assets/score_journey.png)
