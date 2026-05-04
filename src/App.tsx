@@ -13,6 +13,7 @@ import ArchiveComposition from "./interactive/ArchiveComposition";
 import Architecture from "./interactive/Architecture";
 import WhatDidntWork from "./interactive/WhatDidntWork";
 import ScoreAnatomy from "./interactive/ScoreAnatomy";
+import SegNetScrubber from "./interactive/SegNetScrubber";
 import References from "./components/References";
 import Abstract from "./components/Abstract";
 import Postscript from "./components/Postscript";
@@ -23,6 +24,26 @@ export default function App() {
       <Hero />
 
       <Abstract />
+
+      {/* Interactive proof of the thesis: scrub all 600 pairs and watch SegNet agree */}
+      <section className="border-t border-white/10 bg-black">
+        <div className="max-w-[1100px] mx-auto px-6 lg:px-10 py-14 lg:py-18">
+          <div className="mono text-[12px] uppercase tracking-[0.3em] text-comma-green mb-3">
+            THE PROOF
+          </div>
+          <h2 className="h-display text-[24px] md:text-[30px] text-white leading-tight mb-6">
+            600 frame pairs. Scrub through them yourself.
+          </h2>
+          <p className="text-white/70 text-[15px] md:text-[16px] leading-relaxed mb-8 max-w-[820px]">
+            Every pair in the test video, side-by-side. The original dashcam frame, our
+            generator's reconstruction (which looks like a turquoise painting), and what
+            SegNet predicts on each. The sparkline below tracks pixel-class agreement
+            across the whole video — drag along it to jump anywhere. Average across all 600
+            pairs is <span className="text-comma-green font-semibold">99.97%</span>.
+          </p>
+          <SegNetScrubber />
+        </div>
+      </section>
 
       {/* orientation + score formula */}
       <Section
