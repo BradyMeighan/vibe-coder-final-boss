@@ -14,6 +14,9 @@ import Architecture from "./interactive/Architecture";
 import WhatDidntWork from "./interactive/WhatDidntWork";
 import ScoreAnatomy from "./interactive/ScoreAnatomy";
 import SegNetScrubber from "./interactive/SegNetScrubber";
+import SidecarImpact from "./interactive/SidecarImpact";
+import PoseTrajectory from "./interactive/PoseTrajectory";
+import MaskConditioning from "./interactive/MaskConditioning";
 import References from "./components/References";
 import Abstract from "./components/Abstract";
 import Postscript from "./components/Postscript";
@@ -257,6 +260,35 @@ export default function App() {
 
         <Figure src="/writeup_assets/hero_pair_60.png" alt="hero pair 60" caption="Left: ground truth. Right: our reconstruction. Different palette; same SegNet output." />
         <Figure src="/writeup_assets/gen_reconstruction.gif" alt="generator reconstruction" caption="Road geometry, sky/foliage band, and lane markings emerge purely as the easiest way for the generator to satisfy SegNet's argmax. Never supervised by a pixel-level loss." />
+
+        <SubHeading kicker="3.1" id="mask-cond">Mask in, painting out</SubHeading>
+        <Prose>
+          <p>
+            The model is conditioned on a 5-class semantic mask plus a 6-dim
+            pose vector. That's it — no other signal. To prove the mask is
+            doing the heavy lifting, here's the same pair rendered with
+            various mutilations of the input mask. Click around: "no vehicle"
+            wipes the red car blob, "swap sky ↔ road" inverts the palette
+            top-to-bottom, "all class 2" collapses the whole frame to road.
+          </p>
+        </Prose>
+
+        <div className="mt-8"><MaskConditioning /></div>
+
+        <SubHeading kicker="3.2" id="pose-traj">PoseNet sees the same trajectory</SubHeading>
+        <Prose>
+          <p>
+            PoseNet reads both frames of each pair and outputs a 6-dim
+            ego-motion vector (forward speed + 5 rotation/orientation rates).
+            Below: PoseNet's output on the original frames (white) vs on our
+            reconstruction (green) for all 600 pairs in the test video.
+            The two paths overlay because pose distortion is sub-percent of
+            the magnitude of motion. Drag the slider or click the trajectory
+            to scrub.
+          </p>
+        </Prose>
+
+        <div className="mt-8"><PoseTrajectory /></div>
       </Section>
 
       {/* autoresearch */}
@@ -448,7 +480,21 @@ export default function App() {
           />
         </Prose>
 
-        <SubHeading kicker="6.6">What we tried but didn't ship</SubHeading>
+        <SubHeading kicker="6.6" id="impact">What does the sidecar actually do?</SubHeading>
+        <Prose>
+          <p>
+            Honest answer: the sidecar moves a handful of SegNet output pixels
+            per pair. The aggregate effect across all 600 pairs is what saves
+            us ~0.005 score, but per-pair the deltas are tiny — typically 1-6
+            class-flips per frame at the SegNet output. Below: pick any of
+            the top-impact pairs, toggle "without sidecar" to "with sidecar",
+            and watch the disagreement-with-ground-truth wash recede.
+          </p>
+        </Prose>
+
+        <div className="mt-8"><SidecarImpact /></div>
+
+        <SubHeading kicker="6.7">What we tried but didn't ship</SubHeading>
         <Prose>
           <p>
             Every shipped piece in this writeup is the survivor of about a dozen things that didn't make it. Click any card to see what we tried and why it didn't pay back its bytes (or its training time). Categories: <span className="text-comma-green">arch</span>, <span className="text-yellow-400">train</span>, <span className="text-blue-400">codec</span>, <span className="text-pink-400">sidecar</span>.
