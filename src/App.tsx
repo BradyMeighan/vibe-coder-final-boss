@@ -11,6 +11,8 @@ import DropPruning from "./interactive/DropPruning";
 import ScoreJourney from "./interactive/ScoreJourney";
 import ArchiveComposition from "./interactive/ArchiveComposition";
 import Architecture from "./interactive/Architecture";
+import WhatDidntWork from "./interactive/WhatDidntWork";
+import ScoreAnatomy from "./interactive/ScoreAnatomy";
 import References from "./components/References";
 import Abstract from "./components/Abstract";
 import Postscript from "./components/Postscript";
@@ -44,6 +46,19 @@ export default function App() {
 
         <div className="mt-8">
           <ScoreCalculator />
+        </div>
+
+        <Prose className="mt-12">
+          <p>
+            Plugging the actual numbers in, here's what makes up our 0.229.
+            <strong> Rate is ~57% of the score</strong>, even with the 100×
+            multiplier on SegNet. That ratio is why we obsess over bytes
+            below.
+          </p>
+        </Prose>
+
+        <div className="mt-6">
+          <ScoreAnatomy />
         </div>
 
         <Prose className="mt-12">
@@ -414,14 +429,12 @@ export default function App() {
 
         <SubHeading kicker="6.6">What we tried but didn't ship</SubHeading>
         <Prose>
-          <ul className="list-disc pl-6 space-y-2">
-            <li><strong>Adversarial decode at eval time.</strong> Run gradient descent through PoseNet at inflate time, refining each frame in-place rather than storing patches. Killed because doing this means shipping the actual SegNet+PoseNet weights inside <Code>archive.zip</Code> for the decoder to backprop through. Those discriminator weights would dwarf our entire current archive several times over. Not feasible in the rate budget.</li>
-            <li><strong>Channel-only RGB patches.</strong> Modify one color channel at one pixel of the output frame. Net-negative on bytes for our H3 model after per-pair selection. Most "improvements" were within FP4 quantization noise of the model itself.</li>
-            <li><strong>F2 frame warps.</strong> Same as F1 warps but for frame 2. SegNet does read frame 2, so a translation that helps PoseNet hurts SegNet; cost outweighed gain.</li>
-            <li><strong>Higher-qscale warp refinement</strong> (qscale=20, qscale=40): finer displacement quantization. Marginal improvements (&lt;0.0001 score), not worth the integration complexity.</li>
-            <li><strong>Restack ordering.</strong> Different orderings of the bitpack flags. Symmetry made all orderings equivalent in bytes.</li>
-          </ul>
+          <p>
+            Every shipped piece in this writeup is the survivor of about a dozen things that didn't make it. Click any card to see what we tried and why it didn't pay back its bytes (or its training time). Categories: <span className="text-comma-green">arch</span>, <span className="text-yellow-400">train</span>, <span className="text-blue-400">codec</span>, <span className="text-pink-400">sidecar</span>.
+          </p>
         </Prose>
+
+        <div className="mt-8"><WhatDidntWork /></div>
       </Section>
 
       {/* byte squeezing */}

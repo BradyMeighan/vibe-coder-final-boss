@@ -24,23 +24,21 @@ export default function Abstract() {
 
         {/* The central-insight callout */}
         <div className="mt-12 p-8 lg:p-12 border-l-4 border-comma-green bg-gradient-to-br from-comma-green/8 to-transparent">
-          <div className="mono text-[11px] uppercase tracking-[0.3em] text-comma-green mb-4">THE THESIS</div>
+          <div className="mono text-[11px] uppercase tracking-[0.3em] text-comma-green mb-4">THE TRICK</div>
           <h2
             className="h-display text-[32px] md:text-[44px] lg:text-[52px] text-white leading-[1.05]"
             style={{ letterSpacing: "-0.02em" }}
           >
-            When the metric is a frozen neural network,<br />
-            the whole game changes.
+            The score is two neural networks.<br />
+            Compress for what they see.
           </h2>
           <p className="mt-6 text-white/75 text-[16px] md:text-[18px] max-w-[720px] leading-snug">
-            You are not compressing a video so a human can watch it. You are
-            compressing a video so two specific networks (SegNet for segmentation,
-            PoseNet for pose) produce the same outputs they would on the original.
-            That changes <em>every</em> downstream decision: pixel realism is unrewarded,
-            saturated edge-friendly hallucinations score better than honest reconstructions,
-            and the eval networks become oracles you can search against. Knowing the
-            discriminator changes the optimization. The whole submission is a study in
-            taking that idea seriously.
+            SegNet (segmentation) reads frame 2. PoseNet (ego-motion) reads
+            both frames. The score is how close their outputs land vs. the
+            original. So you don't have to ship a watchable video. You ship
+            whatever those two networks happen to read out the same way. Our
+            generator's frames look like a turquoise painting; SegNet can't
+            tell the difference.
           </p>
         </div>
       </div>
